@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mercado de Financiamentos de Veículos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho fixo com abas por assunto; cada aba abre faixas de painéis (resumo primeiro, detalhe depois). */
+:root{
+  color-scheme:light;
+  --bg:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6b6963;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --wash:rgba(11,11,11,.04);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s5:#e87ba4; --s7:#6250d6;
+  --y22:#86b6ef; --y23:#5598e7; --y24:#2a78d6; --y25:#1c5cab; --y26:#eb6834;
+  --good:#006300; --crit:#d03b3b; --warn:#9a6a00; --warnbg:rgba(250,178,25,.16); --critbg:rgba(208,59,59,.10); --goodbg:rgba(12,163,12,.10);
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#a09e97;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s5:#d55181; --s7:#9085e9;
+  --y22:#184f95; --y23:#256abf; --y24:#3987e5; --y25:#6da7ec; --y26:#d95926;
+  --good:#0ca30c; --crit:#e66767; --warn:#fab219; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#a09e97;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s5:#d55181; --s7:#9085e9;
+  --y22:#184f95; --y23:#256abf; --y24:#3987e5; --y25:#6da7ec; --y26:#d95926;
+  --good:#0ca30c; --crit:#e66767; --warn:#fab219; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:1200px;margin:0 auto}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(22px,3.4vw,30px);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+h2{font-size:18px;font-weight:600;text-wrap:balance}
+h3{font-size:14px;font-weight:600;text-wrap:balance}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);font-weight:500}
+.sub{color:var(--ink2);max-width:68ch}
+.num{font-variant-numeric:tabular-nums}
+
+.top{padding-top:22px}
+.top .row{display:flex;flex-wrap:wrap;gap:16px 32px;justify-content:space-between;align-items:flex-end}
+.top .brand{display:grid;gap:6px;min-width:0}
+.meta{display:grid;grid-template-columns:auto auto;gap:2px 14px;margin:0;font-size:12px;color:var(--ink2)}
+.meta dt{color:var(--muted)} .meta dd{margin:0;font-variant-numeric:tabular-nums}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-top:18px;
+  display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:thin}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.tabs button{font:inherit;font-size:13px;font-weight:500;color:var(--ink2);background:none;border:0;border-bottom:2px solid transparent;
+  padding:11px 14px;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink);background:var(--wash)}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--s1)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+
+main{display:grid;gap:18px;padding-top:20px}
+.view[hidden]{display:none}
+.view{display:grid;gap:18px}
+.head{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;align-items:flex-end}
+.head p{color:var(--ink2);max-width:70ch;font-size:13px}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;min-width:0}
+.panel>header{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.panel>header .unit{font-size:12px;color:var(--ink2)}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));background:var(--surface);border:1px solid var(--border);border-radius:8px}
+.kpi{padding:16px 18px;display:grid;gap:4px;align-content:start;min-width:0;border-left:1px solid var(--border)}
+.kpi:first-child{border-left:0}
+@media (max-width:560px){.kpi{border-left:0;border-top:1px solid var(--border)}.kpi:first-child{border-top:0}}
+.kpi .lab{font-size:12px;color:var(--ink2)}
+.kpi .val{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .val small{font-size:13px;font-weight:400;color:var(--ink2);letter-spacing:0;margin-left:4px}
+.kpi .chips{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:2px}
+.chip{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip i{font-style:normal;font-weight:400;color:var(--ink2);margin-left:3px}
+.chip.up{color:var(--good)} .chip.down{color:var(--crit)} .chip.flat{color:var(--ink2)}
+
+.tag{display:inline-block;font-size:11px;line-height:1;padding:3px 6px;border-radius:4px;border:1px solid var(--axis);color:var(--ink2);white-space:nowrap}
+.tag.calc{border-style:dashed}
+.tag.calc::before{content:"ƒ ";font-style:italic}
+.tag.obs::before{content:"● ";color:var(--s1)}
+.tag.warn{border-color:var(--warn);color:var(--warn);background:var(--warnbg)}
+.tag.crit{border-color:var(--crit);color:var(--crit);background:var(--critbg)}
+.tag.ok{border-color:var(--good);color:var(--good);background:var(--goodbg)}
+
+.seg{display:inline-flex;border:1px solid var(--axis);border-radius:6px;overflow:hidden}
+.seg button{font:inherit;font-size:12px;font-weight:500;color:var(--ink2);background:var(--surface);border:0;border-left:1px solid var(--axis);padding:6px 11px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button:hover{background:var(--wash)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.controls label{font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.yrchips{display:flex;flex-wrap:wrap;gap:6px}
+.yrchips button{font:inherit;font-size:12px;font-weight:500;display:flex;gap:6px;align-items:center;background:var(--surface);color:var(--ink2);border:1px solid var(--axis);border-radius:999px;padding:4px 11px 4px 8px;cursor:pointer}
+.yrchips button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
+.yrchips button .sw{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.yrchips button[aria-pressed="false"] .sw{opacity:.25}
+
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink2);margin-bottom:6px}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:2px;background:var(--c);display:inline-block}
+.legend i.ln{height:3px;width:16px;border-radius:2px}
+
+.chart{width:100%;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--font);font-size:11px;fill:var(--muted)}
+.chart .vl{fill:var(--ink);font-weight:500;font-size:11px}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .ax{stroke:var(--axis);stroke-width:1}
+.chart .hit{fill:transparent}
+.chart .hit:hover{fill:var(--ink);fill-opacity:.05}
+.chart .dim{opacity:.5}
+.chart .xh{stroke:var(--ink2);stroke-width:1;stroke-dasharray:3 3}
+.chart .endl{fill:var(--ink);font-weight:500}
+
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--axis);border-radius:6px;
+  padding:8px 10px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:260px;line-height:1.45}
+#tip b{font-weight:600}
+#tip .r{display:flex;gap:8px;justify-content:space-between;align-items:center}
+#tip .r span:first-child{display:inline-flex;gap:6px;align-items:center;color:var(--ink2)}
+#tip .r i{width:9px;height:9px;border-radius:2px;display:inline-block;background:var(--c)}
+#tip .r strong{font-variant-numeric:tabular-nums;font-weight:600}
+#tip .n{color:var(--ink2);margin-top:3px;font-size:11px}
+
+.sbar{display:flex;gap:2px;height:14px}
+.sbar>div{background:var(--c);min-width:2px;border-radius:2px}
+.cmp{display:grid;gap:14px}
+.cmp .item h3{font-size:12px;font-weight:500;color:var(--ink2);margin-bottom:6px}
+.cmp .leg{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:12px;margin-top:7px;color:var(--ink2)}
+.cmp .leg b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.cmp .leg i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px}
+
+.notes{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.notes li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+.notes li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--s1);transform:translateY(-2px)}
+.notes b{font-weight:600}
+
+.scard{display:grid;gap:10px;align-content:start}
+.scard .big{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.scard .big small{font-size:12px;color:var(--ink2);font-weight:400;margin-left:4px;letter-spacing:0}
+.scard .rows{display:grid;gap:4px;font-size:13px}
+.scard .rows div{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.scard .rows span:first-child{display:inline-flex;gap:6px;align-items:center;color:var(--ink2)}
+.scard .rows i{width:9px;height:9px;border-radius:2px;background:var(--c);display:inline-block}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);font-weight:500;text-align:right;padding:6px 10px;border-bottom:1px solid var(--axis);white-space:nowrap}
+.tbl td{padding:7px 10px;border-bottom:1px solid var(--grid);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.tx,.tbl th.tx{text-align:left;white-space:normal}
+.scroll{overflow-x:auto;max-width:100%}
+.hbars{display:grid;gap:9px}
+.hb{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.hb .tr{background:var(--wash);border-radius:3px;height:12px;position:relative}
+.hb .tr>div{position:absolute;inset:0 auto 0 0;background:var(--c,var(--s1));border-radius:3px}
+.hb .v{font-variant-numeric:tabular-nums;font-weight:500;text-align:right;min-width:48px}
+.dv{position:relative;background:var(--wash);border-radius:3px;height:12px}
+.dv::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;border-left:1px solid var(--axis)}
+.dv>div{position:absolute;top:0;bottom:0;border-radius:3px}
+
+table.heat{border-collapse:separate;border-spacing:2px;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+table.heat th{font-weight:500;color:var(--ink2);padding:4px 2px;text-align:center;font-size:11px}
+table.heat th:first-child{text-align:left;padding-right:8px}
+table.heat td{text-align:center;padding:7px 0;border-radius:3px;color:var(--ink);font-size:11px}
+table.heat{border-spacing:1px}
+table.heat td.na{background:var(--wash);color:var(--muted)}
+table.heat td.hi{color:#fff}
+
+.banner{border:1px solid var(--warn);background:var(--warnbg);border-radius:8px;padding:11px 14px;font-size:13px;display:flex;gap:10px;align-items:baseline}
+.banner b{font-weight:600}
+.checks{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.checks li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:9px 0;border-bottom:1px solid var(--grid);align-items:baseline}
+.checks li:last-child{border-bottom:0}
+.checks .d{grid-column:2;color:var(--ink2);font-size:12px}
+.field{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:6px 9px;min-width:0}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
+.btn:hover{background:var(--wash)}
+footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--ink2);display:grid;gap:4px}
+.empty{color:var(--ink2);padding:18px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="row">
+    <div class="brand">
+      <p class="eyebrow" id="h-eyebrow"></p>
+      <h1>Mercado de Financiamentos de Veículos</h1>
+      <p class="sub">Originação de financiamentos, penetração sobre vendas e carteira de crédito, com os números publicados no boletim.</p>
+    </div>
+    <dl class="meta">
+      <dt>Última competência</dt><dd id="h-comp"></dd>
+      <dt>Posição dos dados</dt><dd id="h-pos"></dd>
+      <dt>Crédito (Banco Central)</dt><dd id="h-cred"></dd>
+      <dt>Atualizado em</dt><dd id="h-upd"></dd>
+    </dl>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Seções do painel">
+    <button role="tab" data-v="executiva">Visão executiva</button>
+    <button role="tab" data-v="segmentos">Segmentação</button>
+    <button role="tab" data-v="temporal">Análise temporal</button>
+    <button role="tab" data-v="penetracao">Penetração</button>
+    <button role="tab" data-v="credito">Crédito</button>
+    <button role="tab" data-v="auditoria">Dados e auditoria</button>
+  </nav>
+</header>
+
+<main>
+  <section class="view" id="v-executiva" hidden></section>
+  <section class="view" id="v-segmentos" hidden></section>
+  <section class="view" id="v-temporal" hidden></section>
+  <section class="view" id="v-penetracao" hidden></section>
+  <section class="view" id="v-credito" hidden></section>
+  <section class="view" id="v-auditoria" hidden></section>
+</main>
+
+<footer>
+  <span id="f-fonte"></span>
+  <span>Os valores publicados foram mantidos como no boletim. Itens marcados como <span class="tag calc">calculado</span> foram derivados aqui a partir de números arredondados e não são dados oficiais.</span>
+</footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+// Arquivo gerado por scripts/build.py a partir de data/dados.json. Não edite à mão.
+window.DADOS={"meta":{"titulo":"Mercado de Financiamentos de Veículos","ano_ref":2026,"mes_ref":8,"posicao_dados":"2026-08-31","credito_ref":"jul/2026","atualizado_em":"2026-10-23","fonte":"Boletim \"Mercado de Financiamentos de Veículos\", B3. Vendas de novos: Fenabrave. Vendas de usados: Fenauto. Crédito e juros: Banco Central do Brasil.","arquivo_origem":"Mercado de Financiamentos de Veiculos_ago26.pdf"},"anos":[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"mensal":{"2022":[398878,406912,467726,421807,479398,448865,436115,491589,470535,458874,457068,482621],"2023":[442579,401966,521874,421802,500170,484644,492076,550090,501074,534007,538206,572175],"2024":[562477,525240,571234,611438,577279,584049,626053,631452,600635,670358,605078,614215],"2025":[563444,563619,550670,567373,602108,560090,639414,621849,652513,697065,623092,681864],"2026":[615528,575044,702701,634587,630067,619780,674735,683928]},"media_dia_util":{"2022":[19,21.4,21.3,22.2,21.8,21.4,20.8,21.4,22.4,22.9,22.9,21.9],"2023":[20.1,22.3,22.7,23.4,22.7,23.1,23.4,23.9,25.1,25.4,26.9,28.6],"2024":[25.6,27.6,28.6,27.8,27.5,29.2,27.2,28.7,28.6,29.1,31.8,29.2],"2025":[25.6,28.2,29,28.4,28.7,28,27.8,29.6,29.7,30.3,32.8,31],"2026":[29.3,31.9,31.9,31.7,31.5,29.5,29.3,32.6]},"mes_de_cada_ano":[434,416,469,505,532,504,527,492,550,631,622,684],"acumulado":{"novos":[1613,1179,1163,1335,1455,1070,1183,1094,1300,1630,1685,1926],"usados":[2000,1878,2152,2258,2494,2213,2772,2457,2516,3060,2984,3210],"total":[3613,3057,3315,3593,3949,3283,3954,3551,3815,4689,4669,5136],"var_pct":[null,-15.4,8.5,8.4,9.9,-16.8,20.4,-10.2,7.4,22.9,-0.4,10]},"segmentos":{"total":{"nome":"Total de veículos","slide":"Quantidade de financiamento de veículos | Total","atual":{"n":273,"u":411,"t":684},"mes_ant":{"n":259,"u":416,"t":675},"ano_ant":{"n":232,"u":390,"t":622},"var_mes":{"t":1.4,"n":5.2,"u":-1.3},"var_ano":{"t":10,"n":18,"u":5.6}},"autos":{"nome":"Autos e comerciais leves","slide":"Quantidade de financiamento de veículos | Autos e comerciais leves","atual":{"n":127,"u":350,"t":478},"mes_ant":{"n":125,"u":355,"t":480},"ano_ant":{"n":95,"u":332,"t":427},"var_mes":{"t":-0.5,"n":1.7,"u":-1.3},"var_ano":{"t":11.8,"n":33.5,"u":5.6}},"motos":{"nome":"Motos","slide":"Quantidade de financiamento de veículos | Motos","atual":{"n":133,"u":45,"t":179},"mes_ant":{"n":126,"u":44,"t":170},"ano_ant":{"n":118,"u":45,"t":164},"var_mes":{"t":4.9,"n":5.9,"u":2.2},"var_ano":{"t":9.2,"n":12.7,"u":0.1}},"pesados":{"nome":"Pesados","slide":"Quantidade de financiamento de veículos | Pesados","atual":{"n":12,"u":15,"t":27},"mes_ant":{"n":10,"u":14,"t":24},"ano_ant":{"n":15,"u":15,"t":30},"var_mes":{"t":10.4,"n":16.9,"u":5.5},"var_ano":{"t":-10.8,"n":-17,"u":-5}}},"modalidade":{"linhas":[{"nome":"CDC","atual":585,"ano_ant":529,"mes_ant":580,"var_ano":10.6,"var_mes":0.7,"part":85.5},{"nome":"Consórcio","atual":95,"ano_ant":89,"mes_ant":89,"var_ano":7.1,"var_mes":6.3,"part":13.9},{"nome":"Leasing","atual":2,"ano_ant":1,"mes_ant":2,"var_ano":86,"var_mes":-6.5,"part":0.2},{"nome":"Outros*","atual":3,"ano_ant":4,"mes_ant":4,"var_ano":-6.3,"var_mes":-14,"part":0.5}],"total":{"atual":685,"ano_ant":622,"mes_ant":675,"var_ano":10.1,"var_mes":1.4}},"regiao":[{"nome":"Sudeste","part":42,"var":9.6},{"nome":"Sul","part":20,"var":10},{"nome":"Nordeste","part":19.8,"var":12.2},{"nome":"Centro-Oeste","part":10.7,"var":11.9},{"nome":"Norte","part":7.5,"var":4}],"penetracao":{"vendas":{"total":[11538,10800,11424,11738,12107,8753,12537,10834,12064,13269,15011,16262],"novos":[2718,2141,2077,2351,2616,1804,2307,2306,2620,3031,3230,3724],"usados":[8819,8660,9347,9387,9491,6949,10231,8528,9444,10238,11781,12538]},"pct":{"total":[31.3,28.3,29,30.6,32.6,37.5,31.5,32.8,31.6,35.3,31.1,31.6],"novos":[59.3,55.1,56,56.8,55.6,59.3,51.3,47.5,49.6,53.8,52.2,51.7],"usados":[22.7,21.7,23,24.1,26.3,31.9,27.1,28.8,26.6,29.9,25.3,25.6]},"var_vendas":{"total":[null,-6.4,5.8,2.7,3.1,-27.7,43.2,-13.6,11.4,10,13.1,8.3],"novos":[null,-21.3,-3,13.2,11.3,-31,27.8,0,13.6,15.7,6.6,15.3],"usados":[null,-1.8,7.9,0.4,1.1,-26.8,47.2,-16.6,10.7,8.4,15.1,6.4]}},"credito":{"rotulos_carteira":["2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025","jul/26"],"saldo":{"pf":[187,163,145,151,171,204,221,242,259,343,398,410],"pj":[24,21,18,20,30,53,64,93,116,143,146,138],"t":[211,184,163,171,202,257,285,335,375,486,544,548]},"rotulos_concessao":["jul/15","jul/16","jul/17","jul/18","jul/19","jul/20","jul/21","jul/22","jul/23","jul/24","jul/25","jul/26"],"concessoes":{"pf":[7.1,5.9,7.2,8.4,11.3,10.7,13.1,10.9,13.3,19.3,19.5,23],"pj":[1,0.9,1.1,1.8,3.3,3.3,5,5.1,4.5,5.4,5.5,3.7],"t":[8.1,6.8,8.3,10.2,14.6,14,18.1,16,17.7,24.7,25,26.7]},"yoy_concessoes":{"t":6.9,"pj":-32.7,"pf":18},"yoy_carteira":{"t":6.3,"pj":-4,"pf":10.3},"rotulos_juros":["jul/18","jul/19","jul/20","jul/21","jul/22","jul/23","jul/24","jul/25","jul/26"],"juros":{"pj_aa":[15.96,13.35,11.91,13.28,18.96,17.76,16.91,18.72,18.92],"pf_aa":[22.34,20.34,18.88,21.94,27.64,26.06,25.45,27.29,26.52],"pj_am":[1.24,1.05,0.94,1.04,1.46,1.37,1.31,1.44,1.45],"pf_am":[1.69,1.55,1.45,1.67,2.05,1.95,1.91,2.03,1.98]},"inadimplencia_sem_rotulo":{"A":[1.79,1.01,1.26,0.95,1.45,2.19,2.58,3.75,5.62],"B":[3.67,3.4,4,3.42,4.99,5.54,4.72,5.41,6.63],"C":[4.46,3.18,2.28,2.07,3.63,4,4.07,4.84,5.75],"D":[6.85,6.93,4.9,5.77,7.69,7.78,6.82,6.71,6.92]}},"tempo_uso_total_autos":{"atual":480,"ano_ant":427},"pendencias":[{"nivel":"pendente","titulo":"Novos × usados nos slides mensais","detalhe":"O texto extraído não liga cada número ao seu rótulo. A atribuição (primeiro valor = novos, segundo = usados) foi confirmada cruzando com penetração: 1.926 novos ÷ 3.724 vendas = 51,7% e 3.210 usados ÷ 12.538 = 25,6%. Vale uma conferência visual."},{"nivel":"pendente","titulo":"Juros: série de PF e de PJ","detalhe":"Atribuição inferida pelo nível das taxas (PF acima de PJ)."},{"nivel":"incompleto","titulo":"Inadimplência","detalhe":"Quatro séries sem vínculo com faixa de atraso e tipo de cliente. Título do slide repete o de juros."},{"nivel":"incompleto","titulo":"Tempo de uso e prazo (autos e leves)","detalhe":"Os valores do slide estão sem vínculo com as faixas de uso. Não são exibidos."},{"nivel":"limite","titulo":"Região por estado","detalhe":"O boletim traz participação e variação por região. Quantidades por região e variação por estado não constam nos números extraídos."},{"nivel":"limite","titulo":"Série longa só para o total","detalhe":"Séries de 2015 a 2026 existem para o total. O gráfico do mês indica categorias na legenda, mas só rotula o total."},{"nivel":"limite","titulo":"Uma única edição","detalhe":"Há apenas o boletim de ago/2026. Não há como comparar versões ou detectar revisões de dados anteriores."},{"nivel":"uso","titulo":"Coleta automática","detalhe":"A página de boletins da B3 restringe coleta automatizada. Os dados vieram do arquivo fornecido; novas edições devem ser importadas manualmente."}]};
+</script>
+<script>
+/* ======================= DADOS (lidos de data/dados.js, gerado de data/dados.json por scripts/build.py) ======================= */
+const D=window.DADOS;
+if(!D){document.body.insertAdjacentHTML('afterbegin','<p style="padding:24px">Não foi possível carregar data/dados.js. Rode scripts/build.py.</p>');throw new Error('data/dados.js ausente')}
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESN=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const META=D.meta, Y=META.ano_ref, MI=META.mes_ref-1;
+const YRS=D.anos, LAST=YRS.length-1;
+const MENSAL=D.mensal, MEDIA=D.media_dia_util, AGO=D.mes_de_cada_ano;
+const MY=Object.keys(MENSAL).map(Number).sort((a,b)=>a-b).slice(-5);           // anos exibidos na série mensal
+const MYC=MY.filter(y=>MENSAL[y].length===12);                                  // anos completos (sazonalidade)
+const YTD={novos:D.acumulado.novos,usados:D.acumulado.usados,total:D.acumulado.total,g:D.acumulado.var_pct};
+const SEG={};Object.keys(D.segmentos).forEach(k=>{const x=D.segmentos[k];SEG[k]={nome:x.nome,slide:x.slide,cur:x.atual,prev:x.mes_ant,yoy:x.ano_ant,vMom:x.var_mes,vYoy:x.var_ano}});
+const MT=D.modalidade.total;
+const MODAL={rows:D.modalidade.linhas.map(r=>[r.nome,r.atual,r.ano_ant,r.mes_ant,r.var_ano,r.var_mes,r.part]),total:[MT.atual,MT.ano_ant,MT.mes_ant,MT.var_ano,MT.var_mes]};
+const REG=D.regiao.map(r=>[r.nome,r.part,r.var]);
+const PEN={vendas:D.penetracao.vendas,pct:D.penetracao.pct,g:D.penetracao.var_vendas};
+const C0=D.credito;
+const CRED={lab:C0.rotulos_carteira,saldo:C0.saldo,labJ:C0.rotulos_concessao,conc:C0.concessoes,yoyConc:C0.yoy_concessoes,yoyCart:C0.yoy_carteira,labR:C0.rotulos_juros,juros:C0.juros,inad:C0.inadimplencia_sem_rotulo};
+const CL=CRED.lab.length-1, JL=CRED.labR.length-1;
+const TEMPO_USO=D.tempo_uso_total_autos||null;
+const DIVF=(k,p,c)=>TEMPO_USO&&k==='autos'&&p==='cur'&&c==='t'&&SEG.autos.cur.t!==TEMPO_USO.atual;
+/* rótulos de período usados nos textos: tokens @{...} são trocados após cada renderização */
+const yy2=y=>String(y).slice(2), ML=MES[MI], PMI=(MI+11)%12, PY=MI===0?Y-1:Y;
+const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+const L={cur:`${ML}/${yy2(Y)}`,prev:`${MES[PMI]}/${yy2(PY)}`,yoy:`${ML}/${yy2(Y-1)}`,ml:ML,mes:MESN[MI],Mes:cap(MESN[MI]),
+  ytd:`jan–${ML}`,Ytd:`Jan–${ML}`,Y:Y,Y0:YRS[0],yy:yy2(Y),yy1:yy2(Y-1),
+  Yoy:cap(`${ML}/${yy2(Y-1)}`),Prev:cap(`${MES[PMI]}/${yy2(PY)}`),
+  cred:CRED.lab[CL],credyoy:CRED.labJ[CL-1],credref:META.credito_ref};
+const fxs=s=>typeof s==='string'&&s.indexOf('@{')>=0?s.replace(/@\{(\w+)\}/g,(m,k)=>k in L?L[k]:m):s;
+function fx(root){
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
+  while(n=w.nextNode()){if(n.nodeValue.indexOf('@{')>=0)n.nodeValue=fxs(n.nodeValue)}
+  root.querySelectorAll('*').forEach(e=>{for(const a of [...e.attributes]){if(a.value.indexOf('@{')>=0)e.setAttribute(a.name,fxs(a.value))}});
+}
+
+/* ======================= UTILIDADES ======================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const nf=d=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const f0=v=>nf(0).format(v), f1=v=>nf(1).format(v), f2=v=>nf(2).format(v);
+const sg=(v,d=1)=>(v>0?'+':v<0?'−':'')+nf(d).format(Math.abs(v));
+const pc=(v,d=1)=>sg(v,d)+'%';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const chip=(v,l,d=1,suf='%')=>`<span class="chip ${v>0.04?'up':v<-0.04?'down':'flat'}">${v>0.04?'▲':v<-0.04?'▼':'■'} ${sg(v,d)}${suf}<i>${l}</i></span>`;
+const tag=(k)=>k==='calc'?'<span class="tag calc" title="Valor derivado neste painel a partir de números publicados e arredondados">calculado</span>':'<span class="tag obs" title="Valor publicado no boletim">observado</span>';
+const sw=(c,ln)=>`<i class="${ln?'ln':''}" style="--c:${c}"></i>`;
+const legend=items=>`<div class="legend">${items.map(([n,c,ln])=>`<span>${sw(c,ln)}${esc(n)}</span>`).join('')}</div>`;
+const sum=a=>a.reduce((s,x)=>s+x,0);
+const gr=(a,b)=>(a/b-1)*100;
+const mlab=(y,i)=>`${MES[i]}/${String(y).slice(2)}`;
+const SEGS=['total','autos','motos','pesados'];
+
+function niceTicks(min,max,target=5){
+  const span=(max-min)||1, raw=span/target, p=Math.pow(10,Math.floor(Math.log10(raw))), f=raw/p;
+  const step=(f<=1?1:f<=2?2:f<=5?5:10)*p;
+  const lo=Math.floor(min/step+1e-9)*step, hi=Math.ceil(max/step-1e-9)*step, t=[];
+  for(let v=lo;v<=hi+step/2;v+=step)t.push(+v.toFixed(10));
+  return t;
+}
+function bar(x,ya,yb,w,r,style,attrs=''){
+  const up=yb<=ya,h=Math.abs(ya-yb); if(h<.4)return '';
+  const rr=Math.min(r,h,w/2),y=Math.min(ya,yb);
+  const d=up?`M${x},${ya}V${y+rr}Q${x},${y} ${x+rr},${y}H${x+w-rr}Q${x+w},${y} ${x+w},${y+rr}V${ya}Z`
+            :`M${x},${ya}V${y+h-rr}Q${x},${y+h} ${x+rr},${y+h}H${x+w-rr}Q${x+w},${y+h} ${x+w},${y+h-rr}V${ya}Z`;
+  return `<path d="${d}" style="${style}" ${attrs}/>`;
+}
+
+/* tooltip global */
+const tipEl=$('#tip');
+function showTip(html,x,y){
+  tipEl.innerHTML=fxs(html); tipEl.hidden=false;
+  const r=tipEl.getBoundingClientRect(); let L=x+14,T=y+14;
+  if(L+r.width>innerWidth-8)L=x-r.width-14; if(T+r.height>innerHeight-8)T=y-r.height-14;
+  tipEl.style.left=Math.max(8,L)+'px'; tipEl.style.top=Math.max(8,T)+'px';
+}
+const hideTip=()=>{tipEl.hidden=true};
+document.addEventListener('pointermove',e=>{
+  const t=e.target.closest&&e.target.closest('[data-tip]');
+  if(t)showTip(t.dataset.tip,e.clientX,e.clientY);
+  else if(!(e.target.closest&&e.target.closest('.hitline')))hideTip();
+});
+document.addEventListener('pointerdown',e=>{ if(!(e.target.closest&&e.target.closest('[data-tip],.hitline')))hideTip(); });
+document.addEventListener('scroll',hideTip,{passive:true});
+const trow=(c,n,v)=>`<div class="r"><span><i style="--c:${c}"></i>${esc(n)}</span><strong>${v}</strong></div>`;
+
+/* gráfico de barras (vertical): empilhado, agrupado ou divergente (base) */
+function barChart(el,o){
+  const w=el.clientWidth; if(!w)return;
+  const H=o.h||260,mt=o.labels?26:12,mb=28,ml=o.noY?8:46,mr=6,iw=w-ml-mr,ih=H-mt-mb,n=o.cats.length,S=o.series;
+  const base=o.base||0, tot=i=>S.reduce((s,x)=>s+(x.values[i]||0),0);
+  const vals=S.flatMap(s=>s.values.filter(v=>v!=null));
+  const hi=o.max!=null?o.max:Math.max(...(o.stacked?o.cats.map((_,i)=>tot(i)):vals));
+  const lo=o.min!=null?o.min:Math.min(0,...vals);
+  const T=niceTicks(Math.min(lo,base),Math.max(hi,base),4),d0=T[0],d1=T[T.length-1];
+  const Y=v=>mt+ih*(1-(v-d0)/(d1-d0)),band=iw/n;
+  let g='';
+  T.forEach(t=>{g+=`<line class="gl" x1="${ml}" x2="${w-mr}" y1="${Y(t)}" y2="${Y(t)}"/>`;if(!o.noY)g+=`<text x="${ml-6}" y="${Y(t)+4}" text-anchor="end">${o.yFmt?o.yFmt(t):f0(t)}</text>`});
+  g+=`<line class="ax" x1="${ml}" x2="${w-mr}" y1="${Y(base)}" y2="${Y(base)}"/>`;
+  const k=Math.max(1,Math.ceil((o.lw||34)/band));
+  for(let i=0;i<n;i++){
+    const cx=ml+band*i+band/2, dim=o.hl!=null&&i!==o.hl?'dim':'';
+    let inner='';
+    if(o.stacked){
+      const bw=Math.min(band*.62,60),x0=cx-bw/2; let run=base;
+      const lastIdx=(()=>{for(let j=S.length-1;j>=0;j--)if(S[j].values[i]!=null&&S[j].values[i]!==0)return j;return -1})();
+      S.forEach((s,j)=>{const v=s.values[i]; if(v==null)return;
+        inner+=bar(x0,Y(run),Y(run+v),bw,j===lastIdx?4:0,`fill:${s.color};stroke:var(--surface);stroke-width:${j?2:0}`); run+=v;});
+      if(o.labels)inner+=`<text class="vl" x="${cx}" y="${Y(run)-7}" text-anchor="middle">${esc(o.labels(i))}</text>`;
+    }else{
+      const ns=S.length,gw=Math.min(band*.74,ns*34),bw=(gw-(ns-1)*3)/ns,x0=cx-gw/2;
+      S.forEach((s,j)=>{const v=s.values[i]; if(v==null)return;
+        const col=typeof s.color==='function'?s.color(i,v):s.color;
+        inner+=bar(x0+j*(bw+3),Y(base),Y(v),bw,4,`fill:${col}`);
+        if(o.labels&&ns===1){const up=v>=base;inner+=`<text class="vl" x="${cx}" y="${up?Y(v)-7:Y(v)+15}" text-anchor="middle">${esc(o.labels(i))}</text>`}
+      });
+    }
+    g+=`<g class="${dim}">${inner}</g>`;
+    if(i%k===0||i===n-1&&(n-1)%k===0)g+=`<text x="${cx}" y="${H-9}" text-anchor="middle">${esc(o.cats[i])}</text>`;
+    g+=`<rect class="hit" x="${ml+band*i}" y="${mt-(o.labels?20:4)}" width="${band}" height="${ih+(o.labels?20:4)}" data-tip="${esc(o.tip(i))}"/>`;
+  }
+  el.innerHTML=`<svg viewBox="0 0 ${w} ${H}" width="${w}" height="${H}" role="img" aria-label="${esc(o.aria||'')}">${g}</svg>`;
+}
+
+/* gráfico de linhas com cursor vertical e tooltip */
+function lineChart(el,o){
+  const w=el.clientWidth; if(!w)return;
+  const H=o.h||270,mt=14,mb=28,ml=o.noY?8:48,mr=o.endLabels?46:16,iw=w-ml-mr,ih=H-mt-mb,n=o.xs.length,S=o.series;
+  const vals=S.flatMap(s=>s.values.filter(v=>v!=null));
+  const T=niceTicks(o.min!=null?o.min:Math.min(...vals),o.max!=null?o.max:Math.max(...vals),4),d0=T[0],d1=T[T.length-1];
+  const Y=v=>mt+ih*(1-(v-d0)/(d1-d0)),X=i=>ml+(n===1?iw/2:i*iw/(n-1)),stepX=n>1?iw/(n-1):iw;
+  let g='';
+  T.forEach(t=>{g+=`<line class="gl" x1="${ml}" x2="${w-mr}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${ml-6}" y="${Y(t)+4}" text-anchor="end">${o.yFmt?o.yFmt(t):f0(t)}</text>`});
+  g+=`<line class="ax" x1="${ml}" x2="${w-mr}" y1="${Y(d0)}" y2="${Y(d0)}"/>`;
+  const k=Math.max(1,Math.ceil((o.lw||44)/stepX));
+  for(let i=0;i<n;i+=1){ if(o.xShow?o.xShow(i):i%k===0) g+=`<text x="${X(i)}" y="${H-9}" text-anchor="middle">${esc(o.xLab?o.xLab(i):o.xs[i])}</text>`; }
+  S.forEach(s=>{
+    let d='',pen=false;
+    s.values.forEach((v,i)=>{if(v==null){pen=false;return} d+=(pen?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1);pen=true});
+    g+=`<path d="${d}" fill="none" style="stroke:${s.color}" stroke-width="${s.w||2}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    let li=-1;s.values.forEach((v,i)=>{if(v!=null)li=i});
+    if(li>=0){g+=`<circle cx="${X(li)}" cy="${Y(s.values[li])}" r="4" style="fill:${s.color};stroke:var(--surface)" stroke-width="2"/>`;
+      if(o.endLabels)g+=`<text class="endl" x="${X(li)+9}" y="${Y(s.values[li])+4}">${esc(s.label||s.name)}</text>`;}
+  });
+  g+=`<line class="xh" x1="0" x2="0" y1="${mt}" y2="${Y(d0)}" visibility="hidden"/>`;
+  S.forEach((s,j)=>{g+=`<circle class="xd" data-j="${j}" r="4.5" style="fill:${s.color};stroke:var(--surface)" stroke-width="2" visibility="hidden"/>`});
+  g+=`<rect class="hitline" x="${ml}" y="${mt}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  el.innerHTML=`<svg viewBox="0 0 ${w} ${H}" width="${w}" height="${H}" role="img" aria-label="${esc(o.aria||'')}">${g}</svg>`;
+  const svg=$('svg',el),xh=$('.xh',svg),dots=$$('.xd',svg),hit=$('.hitline',svg);
+  const upd=e=>{
+    const r=svg.getBoundingClientRect(),sc=w/r.width,x=(e.clientX-r.left)*sc;
+    const i=Math.max(0,Math.min(n-1,Math.round((x-ml)/stepX)));
+    xh.setAttribute('x1',X(i));xh.setAttribute('x2',X(i));xh.setAttribute('visibility','visible');
+    let rows='';
+    S.forEach((s,j)=>{const v=s.values[i],d=dots[j];
+      if(v==null){d.setAttribute('visibility','hidden');return}
+      d.setAttribute('cx',X(i));d.setAttribute('cy',Y(v));d.setAttribute('visibility','visible');
+      rows+=trow(s.color,s.name,o.tipVal?o.tipVal(v,s,i):(o.yFmt?o.yFmt(v):f0(v)))});
+    showTip(`<b>${esc(o.tipTitle?o.tipTitle(i):o.xs[i])}</b>${rows}${o.tipNote?`<div class="n">${esc(o.tipNote(i))}</div>`:''}`,e.clientX,e.clientY);
+  };
+  hit.addEventListener('pointermove',upd);hit.addEventListener('pointerdown',upd);
+  hit.addEventListener('pointerleave',()=>{hideTip();xh.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'))});
+}
+
+/* ======================= ESTADO E ROTEAMENTO ======================= */
+const state={base:'yoy',metric:'total',win:'all',years:Object.fromEntries(MY.map(y=>[y,1])),juros:'am',grupo:'',status:'',q:'',lim:150};
+const VIEWS={};
+let cur='executiva';
+function go(name,push=true){
+  if(!VIEWS[name])name='executiva'; cur=name;
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===name));
+  $$('.view').forEach(v=>v.hidden=v.id!=='v-'+name);
+  hideTip(); VIEWS[name]();
+  if(push){try{history.replaceState(null,'','#'+name)}catch(e){}}
+}
+$$('nav.tabs button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(cur!=='auditoria')VIEWS[cur]()},120)});
+addEventListener('hashchange',()=>go((location.hash||'').slice(1),false));
+function seg(el,opts,key,cb){
+  el.innerHTML=opts.map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${state[key]===v}">${l}</button>`).join('');
+  $$('button',el).forEach(b=>b.addEventListener('click',()=>{state[key]=b.dataset.v;cb()}));
+}
+
+/* ======================= VISÃO EXECUTIVA ======================= */
+VIEWS.executiva=function(){
+  const el=$('#v-executiva'),s=SEG.total;
+  const pen26=PEN.pct.total[LAST],pen25=PEN.pct.total[LAST-1];
+  const m26=MEDIA[Y][MI],m25=MEDIA[Y-1][MI];
+  const maxPrev=Math.max(...AGO.slice(0,LAST)), shNov=s.cur.n/s.cur.t*100, shUsd=100-shNov;
+  const usdYtd=YTD.usados[LAST]/YTD.total[LAST]*100;
+  const A=SEG.autos,Mo=SEG.motos,P=SEG.pesados;
+  const dTot=s.cur.t-s.yoy.t, dAut=A.cur.t-A.yoy.t;
+  const hiM=MY.flatMap(y=>MEDIA[y].map((v,i)=>({v,l:mlab(y,i)}))).reduce((a,b)=>b.v>a.v?b:a);
+  const isMax=AGO[LAST]>=Math.max(...AGO.slice(0,LAST)), mCdc=MODAL.rows[0], mCon=MODAL.rows[1], mRest=MODAL.rows.slice(2).reduce((t,r)=>t+r[6],0);
+  el.innerHTML=`
+  <div class="head"><div><h2>@{Mes}/@{Y} em resumo</h2><p>Quantidade de veículos financiados no mês e no acumulado do ano. Valores em mil unidades, como no boletim.</p></div></div>
+  <div class="kpis">
+    <div class="kpi"><span class="lab">Financiamentos em @{cur} ${tag('obs')}</span><span class="val">${f0(s.cur.t)}<small>mil unid.</small></span>
+      <div class="chips">${chip(s.vYoy.t,'vs @{yoy}')}${chip(s.vMom.t,'vs @{prev}')}</div></div>
+    <div class="kpi"><span class="lab">Acumulado @{ytd}/@{yy} ${tag('obs')}</span><span class="val">${f0(YTD.total[LAST])}<small>mil unid.</small></span>
+      <div class="chips">${chip(YTD.g[LAST],'vs @{ytd}/@{yy1}')}<span class="chip flat">+${f0(YTD.total[LAST]-YTD.total[LAST-1])} mil<i>a mais</i></span></div></div>
+    <div class="kpi"><span class="lab">Penetração sobre vendas, @{ytd}/@{yy} ${tag('obs')}</span><span class="val">${f1(pen26)}<small>%</small></span>
+      <div class="chips">${chip(pen26-pen25,'vs @{ytd}/@{yy1}',1,' p.p.')}</div></div>
+    <div class="kpi"><span class="lab">Média por dia útil, @{cur} ${tag('obs')}</span><span class="val">${f1(m26)}<small>mil/dia</small></span>
+      <div class="chips">${chip(gr(m26,m25),'vs @{yoy}')}</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Financiamentos em @{mes}, @{Y0} a @{Y}</h3><span class="unit">mil unidades ${tag('obs')}</span></header>
+      <div class="chart" id="c-ago"></div></div>
+    <div class="panel"><header><h3>Acumulado @{ytd} por condição do veículo</h3><span class="unit">mil unidades ${tag('obs')}</span></header>
+      ${legend([['Novos','var(--s1)'],['Usados','var(--s2)']])}<div class="chart" id="c-ytd"></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Composição de @{mes}/@{yy}</h3><span class="unit">% do total ${tag('calc')}</span></header>
+      <div class="cmp">
+        <div class="item"><h3>Condição do veículo</h3>
+          <div class="sbar"><div style="flex:${s.cur.n};--c:var(--s1)"></div><div style="flex:${s.cur.u};--c:var(--s2)"></div></div>
+          <div class="leg"><span><i style="--c:var(--s1)"></i>Novos <b>${f1(shNov)}%</b> (${f0(s.cur.n)} mil)</span><span><i style="--c:var(--s2)"></i>Usados <b>${f1(shUsd)}%</b> (${f0(s.cur.u)} mil)</span></div></div>
+        <div class="item"><h3>Categoria</h3>
+          <div class="sbar"><div style="flex:${A.cur.t};--c:var(--s3)"></div><div style="flex:${Mo.cur.t};--c:var(--s7)"></div><div style="flex:${P.cur.t};--c:var(--s5)"></div></div>
+          <div class="leg"><span><i style="--c:var(--s3)"></i>Autos e leves <b>${f1(A.cur.t/s.cur.t*100)}%</b></span><span><i style="--c:var(--s7)"></i>Motos <b>${f1(Mo.cur.t/s.cur.t*100)}%</b></span><span><i style="--c:var(--s5)"></i>Pesados <b>${f1(P.cur.t/s.cur.t*100)}%</b></span></div></div>
+        <div class="item"><h3>Modalidade ${tag('obs')}</h3>
+          <div class="sbar"><div style="flex:${mCdc[6]};--c:var(--s1)"></div><div style="flex:${mCon[6]};--c:var(--s3)"></div><div style="flex:${mRest};--c:var(--s7)"></div></div>
+          <div class="leg"><span><i style="--c:var(--s1)"></i>${mCdc[0]} <b>${f1(mCdc[6])}%</b></span><span><i style="--c:var(--s3)"></i>${mCon[0]} <b>${f1(mCon[6])}%</b></span><span><i style="--c:var(--s7)"></i>Leasing e outros <b>${f1(mRest)}%</b></span></div></div>
+      </div></div>
+    <div class="panel"><header><h3>Destaques</h3></header>
+      <ul class="notes">
+        <li><span>${isMax?`@{Mes}/@{yy} é o maior @{mes} da série publicada (@{Y0}–@{Y}): <b>${f0(s.cur.t)} mil</b>, acima dos ${f0(maxPrev)} mil do melhor @{mes} anterior.`:`@{Mes}/@{yy}: <b>${f0(s.cur.t)} mil</b>. O maior @{mes} anterior foi de ${f0(maxPrev)} mil.`} ${tag('calc')}</span></li>
+        <li><span>Usados representam <b>${f1(shUsd)}%</b> dos financiamentos do mês e <b>${f1(usdYtd)}%</b> do acumulado do ano. ${tag('calc')}</span></li>
+        <li><span>Em relação a @{yoy}, o total variou ${sg(dTot,0)} mil; autos e comerciais leves contribuem com ${sg(dAut,0)} mil. ${tag('calc')}</span></li>
+        <li><span>Sobre @{yoy}, novos ${pc(s.vYoy.n)} e usados ${pc(s.vYoy.u)}; sobre @{prev}, novos ${pc(s.vMom.n)} e usados ${pc(s.vMom.u)}. ${tag('obs')}</span></li>
+        <li><span>A média de <b>${f1(m26)} mil por dia útil</b> em @{cur} ${m26>=hiM.v?'é a maior da série mensal':`fica abaixo do pico da série mensal, ${f1(hiM.v)} mil em ${hiM.l}`}. ${tag('obs')}</span></li>
+      </ul></div>
+  </div>`;
+  barChart($('#c-ago'),{cats:YRS.map(String),series:[{name:'Total',color:'var(--s1)',values:AGO}],hl:LAST,h:250,lw:30,
+    labels:i=>f0(AGO[i]),aria:'Financiamentos em @{mes} de cada ano, @{Y0} a @{Y}',
+    tip:i=>`<b>Agosto de ${YRS[i]}</b>${trow('var(--s1)','Total',f0(AGO[i])+' mil')}${i>0?`<div class="n">${pc(gr(AGO[i],AGO[i-1]))} sobre @{ml}/${YRS[i-1]} (calculado)</div>`:''}`});
+  barChart($('#c-ytd'),{cats:YRS.map(y=>"'"+String(y).slice(2)),stacked:true,h:250,lw:26,
+    series:[{name:'Novos',color:'var(--s1)',values:YTD.novos},{name:'Usados',color:'var(--s2)',values:YTD.usados}],
+    labels:i=>f0(YTD.total[i]),aria:'Acumulado de janeiro a @{mes} por condição, @{Y0} a @{Y}',
+    tip:i=>`<b>@{Ytd}/${YRS[i]}</b>${trow('var(--s1)','Novos',f0(YTD.novos[i])+' mil')}${trow('var(--s2)','Usados',f0(YTD.usados[i])+' mil')}${trow('var(--ink)','Total',f0(YTD.total[i])+' mil')}${YTD.g[i]!=null?`<div class="n">${pc(YTD.g[i])} sobre o ano anterior (publicado)</div>`:''}`});
+};
+
+/* ======================= SEGMENTAÇÃO ======================= */
+VIEWS.segmentos=function(){
+  const el=$('#v-segmentos'),b=state.base,bl=b==='yoy'?'@{yoy}':'@{prev}',vk=b==='yoy'?'vYoy':'vMom';
+  const card=k=>{const x=SEG[k],c=x.cur,p=x[b==='yoy'?'yoy':'prev'];
+    return `<div class="panel scard"><div><h3>${x.nome}</h3><span class="unit" style="font-size:12px;color:var(--ink2)">@{cur}, mil unidades</span></div>
+      <div class="big">${f0(c.t)}<small>${chip(x[vk].t,'vs '+bl)}</small></div>
+      <div class="sbar"><div style="flex:${c.n};--c:var(--s1)"></div><div style="flex:${c.u};--c:var(--s2)"></div></div>
+      <div class="rows"><div><span><i style="--c:var(--s1)"></i>Novos</span><span class="num"><b>${f0(c.n)}</b> ${chip(x[vk].n,'')}</span></div>
+      <div><span><i style="--c:var(--s2)"></i>Usados</span><span class="num"><b>${f0(c.u)}</b> ${chip(x[vk].u,'')}</span></div>
+      <div><span>${bl}</span><span class="num">${f0(p.t)} (${f0(p.n)} novos, ${f0(p.u)} usados)</span></div></div></div>`};
+  const cats=['autos','motos','pesados'],T=SEG.total,Tp=T[b==='yoy'?'yoy':'prev'].t;
+  const contrib=(items)=>{const mx=Math.max(...items.map(i=>Math.abs(i[1])),1);
+    return items.map(([n,d,c])=>`<div class="hb" style="grid-template-columns:110px 1fr 120px"><span>${n}</span>
+      <div class="dv"><div style="background:${c};${d>=0?`left:50%;width:${Math.abs(d)/mx*50}%`:`right:50%;width:${Math.abs(d)/mx*50}%`}"></div></div>
+      <span class="v">${sg(d,0)} mil · ${sg(d/Tp*100,1)} p.p.</span></div>`).join('')};
+  const dC=cats.map(k=>[SEG[k].nome.replace('Autos e comerciais leves','Autos e leves'),SEG[k].cur.t-SEG[k][b==='yoy'?'yoy':'prev'].t,k==='autos'?'var(--s3)':k==='motos'?'var(--s7)':'var(--s5)']);
+  const dN=[['Novos',T.cur.n-T[b==='yoy'?'yoy':'prev'].n,'var(--s1)'],['Usados',T.cur.u-T[b==='yoy'?'yoy':'prev'].u,'var(--s2)']];
+  const regC=REG.map(([n,sh,g])=>{const u26=sh/100*YTD.total[LAST],u25=u26/(1+g/100);return {n,sh,g,d:u26-u25,pp:(u26-u25)/YTD.total[LAST-1]*100}});
+  const maxSh=Math.max(...REG.map(r=>r[1]));
+  el.innerHTML=`
+  <div class="head"><div><h2>Segmentação do mercado</h2><p>Categorias, condição do veículo, modalidade e região, com as classificações do boletim.</p></div>
+    <div class="controls"><label>Comparar @{cur} com <span class="seg" id="seg-base" role="group" aria-label="Período de comparação"></span></label></div></div>
+  <div class="grid g4">${SEGS.map(card).join('')}</div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Contribuição para a variação do total</h3><span class="unit">@{cur} vs ${bl} ${tag('calc')}</span></header>
+      <div class="hbars"><div class="eyebrow">Por categoria</div>${contrib(dC)}<div class="eyebrow" style="margin-top:6px">Por condição</div>${contrib(dN)}</div>
+      <p class="unit" style="font-size:12px;color:var(--ink2);margin-top:12px">Diferença em mil unidades e em pontos percentuais da base de ${bl} (${f0(Tp)} mil). Calculado sobre números arredondados; a soma pode divergir do total em 1 mil.</p></div>
+    <div class="panel"><header><h3>Modalidade de financiamento</h3><span class="unit">@{cur}, mil unidades ${tag('obs')}</span></header>
+      <div class="scroll"><table class="tbl"><thead><tr><th>Modalidade</th><th>Part.</th><th>Ago/26</th><th>@{Yoy}</th><th>@{Prev}</th><th>vs @{yoy}</th><th>vs @{prev}</th></tr></thead><tbody>
+      ${MODAL.rows.map(r=>`<tr><td>${r[0]}</td><td>${f1(r[6])}%</td><td>${f0(r[1])}</td><td>${f0(r[2])}</td><td>${f0(r[3])}</td><td>${chip(r[4],'')}</td><td>${chip(r[5],'')}</td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td>—</td><td><b>${f0(MODAL.total[0])}</b></td><td>${f0(MODAL.total[1])}</td><td>${f0(MODAL.total[2])}</td><td>${chip(MODAL.total[3],'')}</td><td>${chip(MODAL.total[4],'')}</td></tr></tbody></table></div>
+      <p class="unit" style="font-size:12px;color:var(--ink2);margin-top:10px">*Outros, conforme o boletim. O total desta tabela (685 mil) difere em 1 mil do total do mês (684 mil) por arredondamento.</p></div>
+  </div>
+  <div class="panel"><header><h3>Região, @{ytd}/@{yy}</h3><span class="unit">participação e variação ${tag('obs')} · contribuição ${tag('calc')}</span></header>
+    <div class="scroll"><table class="tbl"><thead><tr><th>Região</th><th class="tx" style="min-width:170px">Participação no acumulado</th><th>Part. (%)</th><th>Var. vs @{ytd}/@{yy1}</th><th>Contribuição (p.p.)</th></tr></thead><tbody>
+    ${regC.map(r=>`<tr><td>${r.n}</td><td class="tx"><div class="hb" style="grid-template-columns:1fr"><div class="tr"><div style="width:${r.sh/maxSh*100}%"></div></div></div></td><td>${f1(r.sh)}</td><td>${chip(r.g,'')}</td><td>${sg(r.pp,1)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="unit" style="font-size:12px;color:var(--ink2);margin-top:10px">A contribuição reconstrói as unidades de 2026 e 2025 a partir das participações e variações arredondadas; as contribuições somam ${f1(sum(regC.map(r=>r.pp)))} p.p., contra +10,0% publicado para o total. O boletim traz a variação por região; o recorte por estado não aparece nos números extraídos.</p></div>`;
+  seg($('#seg-base'),[['yoy','@{yoy}'],['prev','@{prev}']],'base',VIEWS.segmentos);
+};
+
+/* ======================= ANÁLISE TEMPORAL ======================= */
+VIEWS.temporal=function(){
+  const el=$('#v-temporal'),isT=state.metric==='total';
+  const src=isT?MENSAL:MEDIA, unit=isT?'unidades':'mil unid. por dia útil', fm=isT?(v=>f0(v)):(v=>f1(v));
+  const all=[];MY.forEach(y=>src[y].forEach((v,i)=>all.push({y,i,v,l:mlab(y,i)})));
+  const win=state.win==='all'?all:all.slice(-Number(state.win)),nm=isT?'Financiamentos no mês':'Média por dia útil';
+  const yrs=MY.filter(y=>state.years[y]);
+  const maxR=all.reduce((a,b)=>b.v>a.v?b:a),minR=all.reduce((a,b)=>b.v<a.v?b:a);
+  const cy={};MY.forEach((y,i)=>{cy[y]=['var(--y22)','var(--y23)','var(--y24)','var(--y25)','var(--y26)'][i+5-MY.length]});
+  // sazonalidade: índice médio 2022–2025 (anos completos), média anual = 100
+  const idx=MES.map((_,m)=>sum(MYC.map(y=>src[y][m]/(sum(src[y])/12)*100))/MYC.length);
+  const heatVals=all.map(a=>a.v),hmin=Math.min(...heatVals),hmax=Math.max(...heatVals);
+  const hcell=(y,i)=>{const v=src[y][i];if(v==null)return '<td class="na">—</td>';const t=(v-hmin)/(hmax-hmin),p=Math.round(8+t*72);
+    return `<td class="${p>52?'hi':''}" style="background:color-mix(in srgb,var(--s1) ${p}%,var(--surface))" data-tip="${esc(`<b>${mlab(y,i)}</b><div class='r'><span>${nm}</span><strong>${fm(v)}</strong></div>`)}">${isT?f0(v/1000):f1(v)}</td>`};
+  el.innerHTML=`
+  <div class="head"><div><h2>Análise temporal</h2><p>Série mensal de jan/${String(MY[0]).slice(2)} a @{cur}. A série traz o total de financiamentos do mês e a média por dia útil, que ajusta a diferença de dias entre os meses.</p></div>
+    <div class="controls"><label>Indicador <span class="seg" id="seg-metric" role="group"></span></label><label>Janela <span class="seg" id="seg-win" role="group"></span></label></div></div>
+  <div class="panel"><header><h3>${nm}, ${win[0].l} a ${win[win.length-1].l}</h3><span class="unit">${unit} ${tag('obs')}</span></header><div class="chart" id="c-mensal"></div>
+    <p class="unit" style="font-size:12px;color:var(--ink2);margin-top:8px">Maior valor da série: ${maxR.l} (${fm(maxR.v)}). Menor valor: ${minR.l} (${fm(minR.v)}). ${tag('calc')}</p></div>
+  <div class="panel"><header><h3>Comparar o mesmo mês entre anos</h3><span class="unit">${unit} ${tag('obs')}</span></header>
+    <div class="yrchips" id="yrchips" style="margin-bottom:8px">${MY.map(y=>`<button type="button" data-y="${y}" aria-pressed="${!!state.years[y]}" style="--c:${cy[y]}"><span class="sw"></span>${y}</button>`).join('')}</div>
+    <div class="chart" id="c-anos"></div></div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Mapa de calor ano × mês</h3><span class="unit">${isT?'mil unidades':'mil unid. por dia útil'} ${tag('obs')}</span></header>
+      <div class="scroll"><table class="heat"><thead><tr><th>Ano</th>${MES.map(m=>`<th>${m}</th>`).join('')}</tr></thead><tbody>
+      ${MY.map(y=>`<tr><th>${y}</th>${MES.map((_,i)=>hcell(y,i)).join('')}</tr>`).join('')}</tbody></table></div></div>
+    <div class="panel"><header><h3>Sazonalidade: índice por mês</h3><span class="unit">média anual = 100, média de ${MYC[0]} a ${MYC[MYC.length-1]} ${tag('calc')}</span></header><div class="chart" id="c-saz"></div></div>
+  </div>
+  <div class="panel"><header><h3>Variação do acumulado @{ytd} sobre o ano anterior</h3><span class="unit">% ${tag('obs')}</span></header><div class="chart" id="c-g"></div></div>`;
+  seg($('#seg-metric'),[['total','Total do mês'],['media','Por dia útil']],'metric',VIEWS.temporal);
+  seg($('#seg-win'),[['all','Tudo'],['36','36 meses'],['12','12 meses']],'win',VIEWS.temporal);
+  $$('#yrchips button').forEach(b=>b.addEventListener('click',()=>{const y=b.dataset.y;state.years[y]=state.years[y]?0:1;if(!Object.values(state.years).some(Boolean))state.years[y]=1;VIEWS.temporal()}));
+  lineChart($('#c-mensal'),{xs:win.map(a=>a.l),series:[{name:nm,color:'var(--s1)',values:win.map(a=>a.v)}],h:280,lw:52,
+    yFmt:isT?(v=>f0(v/1000)+' mil'):(v=>f0(v)),tipVal:(v)=>fm(v),aria:nm+' por mês',
+    xShow:i=>win[i].i===0||(win.length<=14&&win[i].i%2===0)||(win.length>14&&win[i].i%(win.length>40?6:3)===0)});
+  lineChart($('#c-anos'),{xs:MES,series:yrs.map(y=>({name:String(y),label:String(y),color:cy[y],values:MES.map((_,i)=>src[y][i]!=null?src[y][i]:null),w:y===MY[MY.length-1]?3:2})),
+    h:290,endLabels:true,lw:40,yFmt:isT?(v=>f0(v/1000)+' mil'):(v=>f0(v)),tipVal:v=>fm(v),aria:'Comparação mensal entre anos'});
+  barChart($('#c-saz'),{cats:MES,base:100,h:250,lw:32,min:Math.min(...idx,90)-2,max:Math.max(...idx,110)+2,yFmt:v=>f0(v),noY:false,
+    series:[{name:'Índice',color:(i,v)=>v>=100?'var(--s1)':'var(--s2)',values:idx}],labels:i=>f0(idx[i]),aria:'Índice sazonal por mês',
+    tip:i=>`<b>${MES[i]}</b><div class="r"><span>Índice</span><strong>${f1(idx[i])}</strong></div><div class="n">${f1(idx[i]-100)>=0?'Acima':'Abaixo'} da média anual (calculado)</div>`});
+  barChart($('#c-g'),{cats:YRS.slice(1).map(y=>"'"+String(y).slice(2)),base:0,h:240,lw:30,min:Math.floor(Math.min(...YTD.g.slice(1),-5)/5)*5-5,max:Math.ceil(Math.max(...YTD.g.slice(1),5)/5)*5+5,yFmt:v=>f0(v)+'%',
+    series:[{name:'Variação',color:(i,v)=>v>=0?'var(--s1)':'var(--s2)',values:YTD.g.slice(1)}],labels:i=>sg(YTD.g[i+1],1)+'%',aria:'Variação anual do acumulado @{ytd}',
+    tip:i=>`<b>@{Ytd}/${YRS[i+1]}</b><div class="r"><span>Variação</span><strong>${pc(YTD.g[i+1])}</strong></div><div class="n">${f0(YTD.total[i])} → ${f0(YTD.total[i+1])} mil unidades</div>`});
+};
+
+/* ======================= PENETRAÇÃO ======================= */
+VIEWS.penetracao=function(){
+  const el=$('#v-penetracao'),P=PEN;
+  const pkTop=P.pct.total.indexOf(Math.max(...P.pct.total));
+  const k=(key,name,color)=>({key,name,color,v26:P.pct[key][LAST],d:P.pct[key][LAST]-P.pct[key][LAST-1],fin:key==='total'?YTD.total:key==='novos'?YTD.novos:YTD.usados});
+  const items=[k('total','Total de veículos','var(--ink)'),k('novos','Veículos novos','var(--s1)'),k('usados','Veículos usados','var(--s2)')];
+  const src={total:'Fenabrave e Fenauto',novos:'Fenabrave',usados:'Fenauto'};
+  el.innerHTML=`
+  <div class="head"><div><h2>Penetração do financiamento sobre vendas</h2><p>Financiamentos de @{ytd} divididos pelas vendas do mesmo período. Vendas de novos vêm da Fenabrave e as de usados, da Fenauto.</p></div></div>
+  <div class="kpis">${items.map(i=>`<div class="kpi"><span class="lab">${i.name}, @{ytd}/@{yy} ${tag('obs')}</span><span class="val">${f1(i.v26)}<small>%</small></span>
+    <div class="chips">${chip(i.d,'vs @{ytd}/@{yy1}',1,' p.p.')}</div>
+    <span class="lab" style="margin-top:2px">${f0(i.fin[LAST])} mil financiados · ${f0(P.vendas[i.key][LAST])} mil vendidos</span></div>`).join('')}</div>
+  <div class="panel"><header><h3>Penetração acumulada @{ytd}, @{Y0} a @{Y}</h3><span class="unit">% das vendas ${tag('obs')}</span></header>
+    ${legend([['Novos','var(--s1)',1],['Usados','var(--s2)',1],['Total','var(--ink)',1]])}<div class="chart" id="c-pen"></div></div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Vendas e financiamentos, @{ytd}</h3><span class="unit">mil unidades ${tag('obs')}</span></header>
+      <div class="scroll"><table class="tbl"><thead><tr><th>Ano</th><th>Vendas</th><th>Financ.</th><th>Penetração</th><th>Var. vendas</th></tr></thead><tbody>
+      ${YRS.map((y,i)=>[y,i]).reverse().map(([y,i])=>`<tr><td>${y}</td><td>${f0(P.vendas.total[i])}</td><td>${f0(YTD.total[i])}</td><td>${f1(P.pct.total[i])}%</td><td>${P.g.total[i]==null?'—':chip(P.g.total[i],'')}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="panel"><header><h3>Como ler</h3></header>
+      <ul class="notes">
+        <li><span><b>Fórmula:</b> penetração (%) = veículos financiados ÷ veículos vendidos × 100, no acumulado de janeiro a @{mes}.</span></li>
+        <li><span><b>Fontes:</b> financiamentos do boletim B3; vendas de novos, Fenabrave; vendas de usados, Fenauto. O total soma as duas fontes.</span></li>
+        <li><span><b>Conferência:</b> recalculamos as ${YRS.length*3} penetrações a partir dos financiamentos e das vendas publicados, e todas batem com o boletim dentro de 0,15 p.p. (ver aba de auditoria).</span></li>
+        <li><span><b>Limite:</b> o boletim apresenta financiamentos por modalidade (CDC, consórcio, leasing e outros), então o numerador não se restringe a um único tipo de crédito. O boletim não detalha o universo de vendas de usados além de citar a Fenauto.</span></li>
+        <li><span><b>Leitura:</b> a penetração de novos está em ${f1(P.pct.novos[LAST])}% (era ${f1(P.pct.novos[0])}% em ${YRS[0]}) e a de usados, em ${f1(P.pct.usados[LAST])}% (era ${f1(P.pct.usados[0])}%). O pico do total foi ${f1(P.pct.total[pkTop])}% em ${YRS[pkTop]}.</span></li>
+      </ul></div>
+  </div>`;
+  lineChart($('#c-pen'),{xs:YRS.map(String),series:[
+    {name:'Novos',color:'var(--s1)',values:P.pct.novos},{name:'Usados',color:'var(--s2)',values:P.pct.usados},{name:'Total',color:'var(--ink)',values:P.pct.total}],
+    h:300,min:0,max:70,yFmt:v=>f0(v)+'%',tipVal:v=>f1(v)+'%',lw:40,aria:'Penetração do financiamento sobre vendas, @{Y0} a @{Y}',
+    tipTitle:i=>'@{Ytd}/'+YRS[i],tipNote:i=>`Vendas: ${f0(P.vendas.novos[i])} novos, ${f0(P.vendas.usados[i])} usados (mil)`});
+};
+
+/* ======================= CRÉDITO ======================= */
+VIEWS.credito=function(){
+  const el=$('#v-credito'),C=CRED,J=C.juros,am=state.juros==='am',pf=am?J.pf_am:J.pf_aa,pj=am?J.pj_am:J.pj_aa;
+  el.innerHTML=`
+  <div class="head"><div><h2>Carteira de crédito e juros</h2><p>Dados do Banco Central do Brasil para aquisição de veículos, com posição de @{credref}.</p></div></div>
+  <div class="banner"><span aria-hidden="true">⚠</span><span><b>Não compare com os financiamentos.</b> Financiamentos (B3) contam veículos financiados no mês. Saldo da carteira e concessões (Banco Central) estão em reais e medem estoque e fluxo de crédito. As duas séries não se somam nem se comparam como equivalentes.</span></div>
+  <div class="kpis">
+    <div class="kpi"><span class="lab">Saldo da carteira, @{cred} ${tag('obs')}</span><span class="val">R$ ${f0(C.saldo.t[CL])}<small>bi</small></span>
+      <div class="chips">${chip(C.yoyCart.t,'a/a',1)}<span class="chip flat">PF ${f0(C.saldo.pf[CL])} · PJ ${f0(C.saldo.pj[CL])}<i>R$ bi</i></span></div></div>
+    <div class="kpi"><span class="lab">Concessões em @{cred} ${tag('obs')}</span><span class="val">R$ ${f1(C.conc.t[CL])}<small>bi</small></span>
+      <div class="chips">${chip(C.yoyConc.t,'a/a',1)}</div></div>
+    <div class="kpi"><span class="lab">Concessões a pessoas físicas, @{cred} ${tag('obs')}</span><span class="val">R$ ${f1(C.conc.pf[CL])}<small>bi</small></span>
+      <div class="chips">${chip(C.yoyConc.pf,'a/a',1)}</div></div>
+    <div class="kpi"><span class="lab">Concessões a pessoas jurídicas, @{cred} ${tag('obs')}</span><span class="val">R$ ${f1(C.conc.pj[CL])}<small>bi</small></span>
+      <div class="chips">${chip(C.yoyConc.pj,'a/a',1)}</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Saldo da carteira de crédito para aquisição de veículos</h3><span class="unit">R$ bilhões ${tag('obs')}</span></header>
+      ${legend([['Pessoa física','var(--s1)'],['Pessoa jurídica','var(--s2)']])}<div class="chart" id="c-saldo"></div>
+      <p class="unit" style="font-size:12px;color:var(--ink2);margin-top:8px">Rótulos como no boletim. A data-base dos anos fechados não é informada.</p></div>
+    <div class="panel"><header><h3>Concessões de crédito em julho de cada ano</h3><span class="unit">R$ bilhões ${tag('obs')}</span></header>
+      ${legend([['Pessoa física','var(--s1)'],['Pessoa jurídica','var(--s2)']])}<div class="chart" id="c-conc"></div></div>
+  </div>
+  <div class="panel"><header><h3>Juros para aquisição de veículos, julho de cada ano</h3>
+    <span class="seg" id="seg-juros" role="group" aria-label="Unidade dos juros"></span></header>
+    ${legend([['Pessoa física','var(--s1)',1],['Pessoa jurídica','var(--s2)',1]])}<div class="chart" id="c-juros"></div>
+    <p class="unit" style="font-size:12px;color:var(--ink2);margin-top:8px"><span class="tag warn">a validar</span> O texto do boletim traz as duas séries sem rótulo ligado a cada valor. Atribuímos a série mais alta a pessoa física e a mais baixa a pessoa jurídica. Confirme no slide original.</p></div>
+  <div class="panel"><header><h3>Inadimplência</h3><span class="tag warn">extração incompleta</span></header>
+    <p class="unit" style="font-size:13px;color:var(--ink2)">O boletim tem dois gráficos de inadimplência (acima de 90 dias e de 15 a 90 dias, PF e PJ). Os valores foram extraídos, mas sem como ligar cada série a faixa e tipo de cliente, e o título do slide repete o de juros. Por isso não aparecem aqui. As quatro séries estão na aba de auditoria.</p></div>`;
+  barChart($('#c-saldo'),{cats:C.lab,stacked:true,h:270,lw:36,series:[{name:'Pessoa física',color:'var(--s1)',values:C.saldo.pf},{name:'Pessoa jurídica',color:'var(--s2)',values:C.saldo.pj}],
+    labels:i=>f0(C.saldo.t[i]),aria:'Saldo da carteira por ano',
+    tip:i=>`<b>${C.lab[i]}</b>${trow('var(--s1)','Pessoa física','R$ '+f0(C.saldo.pf[i])+' bi')}${trow('var(--s2)','Pessoa jurídica','R$ '+f0(C.saldo.pj[i])+' bi')}${trow('var(--ink)','Total','R$ '+f0(C.saldo.t[i])+' bi')}`});
+  barChart($('#c-conc'),{cats:C.labJ.map(s=>s.replace('jul/','')),stacked:true,h:270,lw:30,series:[{name:'Pessoa física',color:'var(--s1)',values:C.conc.pf},{name:'Pessoa jurídica',color:'var(--s2)',values:C.conc.pj}],
+    labels:i=>f1(C.conc.t[i]),aria:'Concessões em julho de cada ano',yFmt:v=>f0(v),
+    tip:i=>`<b>${C.labJ[i]}</b>${trow('var(--s1)','Pessoa física','R$ '+f1(C.conc.pf[i])+' bi')}${trow('var(--s2)','Pessoa jurídica','R$ '+f1(C.conc.pj[i])+' bi')}${trow('var(--ink)','Total','R$ '+f1(C.conc.t[i])+' bi')}`});
+  lineChart($('#c-juros'),{xs:C.labR,series:[{name:'Pessoa física',color:'var(--s1)',values:pf},{name:'Pessoa jurídica',color:'var(--s2)',values:pj}],
+    h:280,min:am?0:0,max:am?2.5:30,yFmt:v=>(am?f1(v):f0(v))+'%',tipVal:v=>f2(v)+(am?'% a.m.':'% a.a.'),lw:50,aria:'Juros para aquisição de veículos'});
+  seg($('#seg-juros'),[['am','% ao mês'],['aa','% ao ano']],'juros',VIEWS.credito);
+};
+
+/* ======================= AUDITORIA ======================= */
+const REC=[];
+function rec(grupo,ind,per,dim,val,un,tipo,fonte,status='Validado',obs=''){REC.push({grupo,ind,per,dim,val,un,tipo,fonte,status,obs})}
+function buildRecords(){
+  REC.length=0;
+  MY.forEach(y=>MENSAL[y].forEach((v,i)=>{
+    rec('Evolução mensal','Financiamentos no mês',mlab(y,i),'Total de veículos',v,'unidades','Observado','Evolução mensal em dia útil');
+    rec('Evolução mensal','Média por dia útil',mlab(y,i),'Total de veículos',MEDIA[y][i],'mil unid./dia útil','Observado','Evolução mensal em dia útil')}));
+  YRS.forEach((y,i)=>rec('Mês de referência','Financiamentos em @{mes}','@{ml}/'+y,'Total de veículos',AGO[i],'mil unidades','Observado','Para o mês de @{mes}'));
+  YRS.forEach((y,i)=>{
+    ['novos','usados','total'].forEach(c=>rec('Acumulado','Financiamentos @{ytd}','@{ytd}/'+y,c==='total'?'Total':c[0].toUpperCase()+c.slice(1),YTD[c][i],'mil unidades','Observado','Quantidade de financiamento | Acumulado'));
+    if(YTD.g[i]!=null)rec('Acumulado','Variação do acumulado','@{ytd}/'+y,'Total',YTD.g[i],'%','Observado','Quantidade de financiamento | Acumulado')});
+  SEGS.forEach(k=>{const x=SEG[k];
+    [['cur','@{cur}'],['prev','@{prev}'],['yoy','@{yoy}']].forEach(([p,pl])=>['n','u','t'].forEach(c=>
+      rec('Segmentos','Financiamentos no mês',pl,x.nome+' · '+({n:'Novos',u:'Usados',t:'Total'})[c],x[p][c],'mil unidades','Observado',x.slide,
+        DIVF(k,p,c)?'Divergência identificada':'Validado',DIVF(k,p,c)?SEG.autos.cur.t+' neste slide; '+TEMPO_USO.atual+' no slide de tempo de uso':'')));
+    ['n','u','t'].forEach(c=>{rec('Segmentos','Variação mensal','@{cur} vs @{prev}',x.nome+' · '+({n:'Novos',u:'Usados',t:'Total'})[c],x.vMom[c],'%','Observado',x.slide);
+      rec('Segmentos','Variação anual','@{cur} vs @{yoy}',x.nome+' · '+({n:'Novos',u:'Usados',t:'Total'})[c],x.vYoy[c],'%','Observado',x.slide)})});
+  MODAL.rows.forEach(r=>{const n=r[0];
+    rec('Modalidade','Financiamentos no mês','@{cur}',n,r[1],'mil unidades','Observado','Modalidade de financiamento');
+    rec('Modalidade','Financiamentos no mês','@{yoy}',n,r[2],'mil unidades','Observado','Modalidade de financiamento');
+    rec('Modalidade','Financiamentos no mês','@{prev}',n,r[3],'mil unidades','Observado','Modalidade de financiamento');
+    rec('Modalidade','Variação anual','@{cur} vs @{yoy}',n,r[4],'%','Observado','Modalidade de financiamento');
+    rec('Modalidade','Variação mensal','@{cur} vs @{prev}',n,r[5],'%','Observado','Modalidade de financiamento');
+    rec('Modalidade','Participação','@{cur}',n,r[6],'%','Observado','Modalidade de financiamento')});
+  REG.forEach(([n,sh,g])=>{rec('Região','Participação','@{ytd}/@{yy}',n,sh,'%','Observado','Financiamento por região | Quantidade e representatividade');
+    rec('Região','Variação','@{ytd}/@{yy} vs @{ytd}/@{yy1}',n,g,'%','Observado','Financiamento por região | Variação %');
+    const u26=sh/100*YTD.total[LAST],u25=u26/(1+g/100);
+    rec('Região','Contribuição para o crescimento','@{ytd}/@{yy}',n,+((u26-u25)/YTD.total[LAST-1]*100).toFixed(2),'p.p.','Calculado','Derivado de participação e variação arredondadas','Validado','Aproximado')});
+  YRS.forEach((y,i)=>['total','novos','usados'].forEach(c=>{const nm=c[0].toUpperCase()+c.slice(1);
+    rec('Penetração','Vendas','@{ytd}/'+y,nm,PEN.vendas[c][i],'mil unidades','Observado','Financiamentos sobre vendas | '+nm);
+    rec('Penetração','Penetração publicada','@{ytd}/'+y,nm,PEN.pct[c][i],'%','Observado','Financiamentos sobre vendas | '+nm);
+    rec('Penetração','Penetração recalculada','@{ytd}/'+y,nm,+(YTD[c][i]/PEN.vendas[c][i]*100).toFixed(2),'%','Calculado','Financiados ÷ vendas')}));
+  CRED.lab.forEach((l,i)=>['pf','pj','t'].forEach(c=>rec('Crédito (BCB)','Saldo da carteira',l,({pf:'Pessoa física',pj:'Pessoa jurídica',t:'Total'})[c],CRED.saldo[c][i],'R$ bilhões','Observado','Saldo da carteira de crédito para aquisição de veículos')));
+  CRED.labJ.forEach((l,i)=>['pf','pj','t'].forEach(c=>rec('Crédito (BCB)','Concessões',l,({pf:'Pessoa física',pj:'Pessoa jurídica',t:'Total'})[c],CRED.conc[c][i],'R$ bilhões','Observado','Concessões de crédito para aquisição de veículos')));
+  [['t','Total'],['pj','Pessoa jurídica'],['pf','Pessoa física']].forEach(([c,n])=>{
+    rec('Crédito (BCB)','Crescimento das concessões','@{cred} vs @{credyoy}',n,CRED.yoyConc[c],'%','Observado','Crédito para veículos | Total');
+    rec('Crédito (BCB)','Crescimento da carteira','@{cred} vs @{credyoy}',n,CRED.yoyCart[c],'%','Observado','Crédito para veículos | Total','Pendente de validação','Sem base jul/25 no boletim para recalcular')});
+  CRED.labR.forEach((l,i)=>{[['pf','Pessoa física'],['pj','Pessoa jurídica']].forEach(([c,n])=>{
+    rec('Juros (BCB)','Juros ao mês',l,n,CRED.juros[c+'_am'][i],'% a.m.','Observado','Juros para aquisição de veículos','Pendente de validação','Atribuição PF/PJ inferida');
+    rec('Juros (BCB)','Juros ao ano',l,n,CRED.juros[c+'_aa'][i],'% a.a.','Observado','Juros para aquisição de veículos','Pendente de validação','Atribuição PF/PJ inferida')})});
+  CRED.labR.forEach((l,i)=>Object.keys(CRED.inad).forEach(s=>rec('Inadimplência (BCB)','Inadimplência, série '+s,l,'Atribuição pendente',CRED.inad[s][i],'% da carteira','Observado','Inadimplência de veículos','Extração incompleta','Faixa (>90 dias ou 15–90) e PF/PJ sem vínculo')));
+}
+function runChecks(){
+  const out=[],add=(nome,ok,det,lvl)=>out.push({nome,lvl:ok?'ok':(lvl||'fail'),det});
+  // 1 dias úteis inteiros
+  let bad=[],cnt=0;MY.forEach(y=>MENSAL[y].forEach((v,i)=>{cnt++;const d=v/1000/MEDIA[y][i];if(Math.abs(d-Math.round(d))>0.2||d<17||d>24)bad.push(mlab(y,i))}));
+  add('Total mensal ÷ média por dia útil resulta em número inteiro de dias úteis',!bad.length,`${cnt-bad.length} de ${cnt} meses. Confirma valores e ordem dos meses da série.${bad.length?' Fora do padrão: '+bad.join(', '):''}`);
+  // 2 soma mensal = acumulado
+  const r2=MY.map(y=>{const s=sum(MENSAL[y].slice(0,MI+1))/1000,p=YTD.total[YRS.indexOf(y)];return {y,s,p,ok:Math.abs(s-p)<=1}});
+  add('Soma de jan a ago da série mensal = acumulado publicado',r2.every(r=>r.ok),r2.map(r=>`${r.y}: ${f0(r.s)} vs ${f0(r.p)}`).join(' · '));
+  // 3 novos+usados=total
+  const r3=YRS.filter((_,i)=>Math.abs(YTD.novos[i]+YTD.usados[i]-YTD.total[i])>1);
+  add('Novos + usados = total no acumulado @{ytd}',!r3.length,`${YRS.length-r3.length} de ${YRS.length} anos, tolerância de 1 mil.`);
+  // 4 variação acumulado
+  let r4=0,t4=0;for(let i=1;i<12;i++){t4++;if(Math.abs(gr(YTD.total[i],YTD.total[i-1])-YTD.g[i])<=0.15)r4++}
+  add('Variação anual do acumulado recalculada = publicada',r4===t4,`${r4} de ${t4} anos, tolerância de 0,15 p.p.`);
+  // 5 penetração
+  let r5=0,t5=0;['total','novos','usados'].forEach(c=>YRS.forEach((_,i)=>{t5++;const rc=YTD[c][i]/PEN.vendas[c][i]*100;if(Math.abs(rc-PEN.pct[c][i])<=0.15)r5++}));
+  add('Penetração recalculada (financiados ÷ vendas) = publicada',r5===t5,`${r5} de ${t5} valores, tolerância de 0,15 p.p.`);
+  let r6=0;YRS.forEach((_,i)=>{if(Math.abs(PEN.vendas.novos[i]+PEN.vendas.usados[i]-PEN.vendas.total[i])<=2)r6++});
+  add('Vendas de novos + usados = vendas totais',r6===YRS.length,`${r6} de ${YRS.length} anos, tolerância de 2 mil.`);
+  // 7 categorias = total
+  const r7=['cur','prev','yoy'].map(p=>({p,d:SEG.autos[p].t+SEG.motos[p].t+SEG.pesados[p].t-SEG.total[p].t}));
+  add('Autos e leves + motos + pesados = total do mês',r7.every(r=>Math.abs(r.d)<=2),r7.map(r=>`${r.p}: diferença de ${r.d} mil`).join(' · '));
+  // 8 novos+usados por segmento
+  let r8=0,t8=0;SEGS.forEach(k=>['cur','prev','yoy'].forEach(p=>{t8++;if(Math.abs(SEG[k][p].n+SEG[k][p].u-SEG[k][p].t)<=1)r8++}));
+  add('Novos + usados = total em cada segmento e período',r8===t8,`${r8} de ${t8} combinações, tolerância de 1 mil.`);
+  // 9 variações dos segmentos
+  let r9=0,t9=0;SEGS.forEach(k=>['n','u','t'].forEach(c=>[['prev','vMom'],['yoy','vYoy']].forEach(([p,v])=>{t9++;const a=SEG[k][p][c],b=SEG[k].cur[c],tol=100*(0.5/a+0.5*b/(a*a))+0.15;if(Math.abs(gr(b,a)-SEG[k][v][c])<=tol)r9++})));
+  add('Variações dos segmentos recalculadas = publicadas',r9===t9,`${r9} de ${t9}, com tolerância pelo arredondamento em mil unidades.`);
+  // 10 região
+  const sh=sum(REG.map(r=>r[1])),gw=gr(1,sum(REG.map(r=>r[1]/100/(1+r[2]/100))));
+  add('Regiões: participações somam 100% e o crescimento ponderado = 10,0%',Math.abs(sh-100)<=.05&&Math.abs(gw-10.0)<=.2,`Soma das participações ${f1(sh)}%; crescimento ponderado recalculado ${f1(gw)}%.`);
+  // 11 modalidade
+  const mt=sum(MODAL.rows.map(r=>r[1])),msh=sum(MODAL.rows.map(r=>r[6]));
+  add('Modalidade: soma das linhas = total e participações = 100%',Math.abs(mt-MODAL.total[0])<=2&&Math.abs(msh-100)<=.05,`Soma das linhas ${f0(mt)} mil; participações somam ${f1(msh)}%, por arredondamento.`,'warn');
+  // 12 crédito
+  let r12=0,t12=0;for(let i=0;i<=CL;i++){t12+=2;if(Math.abs(CRED.saldo.pf[i]+CRED.saldo.pj[i]-CRED.saldo.t[i])<=1)r12++;if(Math.abs(CRED.conc.pf[i]+CRED.conc.pj[i]-CRED.conc.t[i])<=0.15)r12++}
+  add('Crédito: pessoa física + pessoa jurídica = total (saldo e concessões)',r12===t12,`${r12} de ${t12} conferências, tolerância de R$ 1 bi no saldo e R$ 0,15 bi nas concessões.`);
+  const gc=k=>gr(CRED.conc[k][CL],CRED.conc[k][CL-1]);
+  add('Crescimento das concessões recalculado = publicado',['t','pj','pf'].every(k=>Math.abs(gc(k)-CRED.yoyConc[k])<=0.3),`Total ${pc(gc('t'))}, PJ ${pc(gc('pj'))}, PF ${pc(gc('pf'))} (calculado) contra ${pc(CRED.yoyConc.t)}, ${pc(CRED.yoyConc.pj)}, ${pc(CRED.yoyConc.pf)} (publicado).`);
+  let r14=0;for(let i=0;i<=JL;i++)['pf','pj'].forEach(c=>{const aa=(Math.pow(1+CRED.juros[c+'_am'][i]/100,12)-1)*100;if(Math.abs(aa-CRED.juros[c+'_aa'][i])<=0.15)r14++});
+  add('Juros: taxa mensal composta em 12 meses = taxa anual publicada',r14===2*(JL+1),`${r14} de ${2*(JL+1)} pares, tolerância de 0,15 p.p. O ajuste não define qual série é PF e qual é PJ.`);
+  // divergências
+  if(TEMPO_USO)add('Total de autos e leves em @{cur}: slide de segmento × slide de tempo de uso',SEG.autos.cur.t===TEMPO_USO.atual,`${SEG.autos.cur.t} mil no slide de segmento e ${TEMPO_USO.atual} mil no slide de tempo de uso (@{yoy}: ${SEG.autos.yoy.t} e ${TEMPO_USO.ano_ant} mil). O painel usa ${SEG.autos.cur.t}, que fecha com o total do mês.`);
+  add('Total de @{cur}: slide do mês × tabela de modalidade',SEG.total.cur.t===MODAL.total[0],`${SEG.total.cur.t} mil e ${MODAL.total[0]} mil. Diferença de 1 mil, compatível com arredondamento.`,'warn');
+  return out;
+}
+VIEWS.auditoria=function(){
+  const el=$('#v-auditoria');
+  if(!REC.length)buildRecords();
+  const checks=runChecks(),nOk=checks.filter(c=>c.lvl==='ok').length,nW=checks.filter(c=>c.lvl==='warn').length,nF=checks.filter(c=>c.lvl==='fail').length;
+  const stat={};REC.forEach(r=>stat[r.status]=(stat[r.status]||0)+1);
+  const grupos=[...new Set(REC.map(r=>r.grupo))],sts=['Validado','Pendente de validação','Divergência identificada','Extração incompleta'];
+  const lv={ok:'<span class="tag ok">aprovada</span>',warn:'<span class="tag warn">aviso</span>',fail:'<span class="tag crit">divergência</span>'};
+  el.innerHTML=`
+  <div class="head"><div><h2>Dados e auditoria</h2><p>Conferências feitas agora, com os números carregados nesta página. Todos os valores abaixo vêm do boletim de ago/2026.</p></div></div>
+  <div class="kpis">
+    <div class="kpi"><span class="lab">Registros estruturados</span><span class="val">${f0(REC.length)}</span><span class="lab">${f0(REC.filter(r=>r.tipo==='Calculado').length)} calculados</span></div>
+    <div class="kpi"><span class="lab">Conferências aprovadas</span><span class="val">${nOk}<small>de ${checks.length}</small></span></div>
+    <div class="kpi"><span class="lab">Avisos e divergências</span><span class="val">${nW+nF}</span><span class="lab">${nW} aviso(s) · ${nF} divergência(s)</span></div>
+    <div class="kpi"><span class="lab">Pendentes ou incompletos</span><span class="val">${(stat['Pendente de validação']||0)+(stat['Extração incompleta']||0)}</span><span class="lab">registros</span></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><header><h3>Conferências automáticas</h3></header>
+      <ul class="checks">${checks.map(c=>`<li>${lv[c.lvl]}<span>${esc(c.nome)}</span><span class="d">${esc(c.det)}</span></li>`).join('')}</ul></div>
+    <div class="panel"><header><h3>Pendências e limitações</h3></header>
+      <ul class="checks">${(D.pendencias||[]).map(p=>`<li><span class="tag ${p.nivel==='pendente'||p.nivel==='limite'?'warn':p.nivel==='incompleto'?'crit':''}">${esc(p.nivel)}</span><span>${esc(p.titulo)}</span><span class="d">${esc(p.detalhe)}</span></li>`).join('')||'<li><span class="d">Nenhuma pendência registrada.</span></li>'}</ul></div>
+  </div>
+  <div class="panel"><header><h3>Fórmulas dos indicadores calculados</h3></header>
+    <div class="scroll"><table class="tbl"><thead><tr><th>Indicador</th><th class="tx">Fórmula</th><th class="tx">Limitação</th></tr></thead><tbody>
+      <tr><td>Participação</td><td class="tx">parte ÷ total × 100</td><td class="tx">Números em mil unidades arredondados.</td></tr>
+      <tr><td>Variação percentual</td><td class="tx">(atual ÷ base − 1) × 100</td><td class="tx">Onde há valor publicado, o painel usa o publicado.</td></tr>
+      <tr><td>Contribuição (p.p.)</td><td class="tx">(atual − base) ÷ total da base × 100</td><td class="tx">Erro de arredondamento de até 1 mil por parcela.</td></tr>
+      <tr><td>Contribuição regional</td><td class="tx">unid. 2026 = participação × acumulado; unid. 2025 = unid. 2026 ÷ (1 + variação)</td><td class="tx">Reconstruída de percentuais arredondados. Aproximada.</td></tr>
+      <tr><td>Penetração</td><td class="tx">financiados ÷ vendidos × 100, @{ytd}</td><td class="tx">Fontes de vendas distintas para novos e usados.</td></tr>
+      <tr><td>Índice sazonal</td><td class="tx">média de (valor do mês ÷ média do ano) × 100, anos completos da série</td><td class="tx">Só anos completos; o ano corrente fica de fora por ser parcial.</td></tr>
+      <tr><td>Média por dia útil</td><td class="tx">publicada no boletim</td><td class="tx">Não recalculada.</td></tr>
+    </tbody></table></div></div>
+  <div class="panel"><header><h3>Tabela detalhada</h3><span class="unit" id="rcount"></span></header>
+    <div class="controls" style="margin-bottom:12px">
+      <label>Grupo <select class="field" id="f-grupo"><option value="">Todos</option>${grupos.map(g=>`<option ${state.grupo===g?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
+      <label>Status <select class="field" id="f-status"><option value="">Todos</option>${sts.map(g=>`<option ${state.status===g?'selected':''}>${g}</option>`).join('')}</select></label>
+      <label>Busca <input class="field" id="f-q" type="search" placeholder="indicador, período ou dimensão" value="${esc(state.q)}"></label>
+      <button class="btn" id="b-csv" type="button">Copiar CSV dos filtrados</button><span id="csvmsg" class="unit" style="font-size:12px;color:var(--ink2)"></span>
+    </div>
+    <div class="scroll"><table class="tbl"><thead><tr><th>Grupo</th><th class="tx">Indicador</th><th>Período</th><th class="tx">Dimensão</th><th>Valor</th><th>Unidade</th><th>Tipo</th><th class="tx">Fonte (slide)</th><th class="tx">Status</th></tr></thead><tbody id="rbody"></tbody></table></div>
+    <div id="rmore" style="margin-top:10px"></div></div>`;
+  const filt=()=>REC.filter(r=>(!state.grupo||r.grupo===state.grupo)&&(!state.status||r.status===state.status)&&(!state.q||(r.ind+' '+r.per+' '+r.dim+' '+r.grupo).toLowerCase().includes(state.q.toLowerCase())));
+  const stTag=s=>s==='Validado'?'<span class="tag ok">validado</span>':s==='Divergência identificada'?'<span class="tag crit">divergência</span>':s==='Extração incompleta'?'<span class="tag crit">incompleto</span>':'<span class="tag warn">pendente</span>';
+  const draw=()=>{const f=filt(),part=f.slice(0,state.lim);
+    $('#rcount').textContent=`${f0(f.length)} de ${f0(REC.length)} registros`;
+    $('#rbody').innerHTML=part.length?part.map(r=>`<tr><td>${r.grupo}</td><td class="tx">${esc(r.ind)}</td><td>${esc(r.per)}</td><td class="tx">${esc(r.dim)}</td><td>${typeof r.val==='number'?nf(Math.abs(r.val)<100&&r.val%1?2:0).format(r.val):r.val}</td><td>${esc(r.un)}</td><td>${tag(r.tipo==='Calculado'?'calc':'obs')}</td><td class="tx">${esc(r.fonte)}</td><td class="tx">${stTag(r.status)}${r.obs?` <span class="unit" style="font-size:11px;color:var(--ink2)">${esc(r.obs)}</span>`:''}</td></tr>`).join(''):`<tr><td colspan="9" class="empty tx">Nenhum registro com esses filtros.</td></tr>`;
+    $('#rmore').innerHTML=f.length>state.lim?`<button class="btn" id="b-more" type="button">Mostrar mais ${Math.min(300,f.length-state.lim)}</button>`:'';
+    fx($('#rbody'));
+    const bm=$('#b-more');if(bm)bm.addEventListener('click',()=>{state.lim+=300;draw()});
+  };
+  $('#f-grupo').addEventListener('change',e=>{state.grupo=e.target.value;state.lim=150;draw()});
+  $('#f-status').addEventListener('change',e=>{state.status=e.target.value;state.lim=150;draw()});
+  $('#f-q').addEventListener('input',e=>{state.q=e.target.value;state.lim=150;draw()});
+  $('#b-csv').addEventListener('click',async()=>{
+    const f=filt(),q=v=>'"'+String(v).replace(/"/g,'""')+'"',
+      csv=['grupo;indicador;periodo;dimensao;valor;unidade;tipo;fonte;status;observacao'].concat(f.map(r=>[r.grupo,r.ind,r.per,r.dim,r.val,r.un,r.tipo,r.fonte,r.status,r.obs].map(v=>q(fxs(String(v)))).join(';'))).join('\n');
+    try{await navigator.clipboard.writeText(csv);$('#csvmsg').textContent=`${f0(f.length)} linhas copiadas.`}
+    catch(e){const ta=document.createElement('textarea');ta.value=csv;ta.className='field';ta.style.cssText='width:100%;height:120px;margin-top:8px';ta.setAttribute('aria-label','CSV para copiar');$('#rmore').appendChild(ta);ta.select();$('#csvmsg').textContent='Selecione e copie o texto abaixo da tabela.'}
+  });
+  draw();
+};
+
+const fmtD=iso=>iso.split('-').reverse().join('/');
+$('#h-eyebrow').textContent=`Boletim B3 · competência ${MESN[MI]}/${Y}`;
+$('#h-comp').textContent=`${ML}/${Y}`;
+$('#h-pos').textContent=fmtD(META.posicao_dados);
+$('#h-cred').textContent=META.credito_ref;
+$('#h-upd').textContent=fmtD(META.atualizado_em);
+$('#f-fonte').innerHTML='<b>Fonte dos dados:</b> '+esc(META.fonte)+(META.arquivo_origem?' Arquivo de origem: '+esc(META.arquivo_origem)+'.':'');
+document.title=META.titulo;
+Object.keys(VIEWS).forEach(k=>{const f=VIEWS[k];VIEWS[k]=function(){f();fx($('#v-'+k))}});
+go((location.hash||'').slice(1)||'executiva',false);
+</script>
+</body>
+</html>
